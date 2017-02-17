@@ -66,46 +66,65 @@ done
 #####################
 
 
-chmod u+x */*.sh
+#chmod u+x */*.sh
 
-for i in mAus mCil mLuc mOcc mSep mThy mViv mYum
-do
-    cd $i
-    ./qsub.sh
-    cd ..
-done
+#for i in mAus mCil mLuc mOcc mSep mThy mViv mYum
+#do
+#    cd $i
+#    ./qsub.sh
+#    cd ..
+#done
 
 
-#so the loop above creates a directory for each taxa.  The following runs in individual dirs
+#this loop will (1) create sliding windows across the genomes
+#               (2) extract the seq
+#               (3)and create files for alignment
 
+#set window size and slide
 WINDOW=1000000
 SLIDE=100000
-for SPECIES in mAus mCil mLuc mOcc mSep mThy mViv mYum
 
+for SPECIES in mAus mCil mLuc mOcc mSep mThy mViv mYum
+do
+
+    #move into the species directory
     cd $SPECIES
 
     #--------  Sliding windows -----------#
+    #index the genome, then create BED sliding window intervals
     samtools faidx $SPECIES.refMasked.fa
     bedtools makewindows -g $SPECIES.refMasked.fa.fai -w $WINDOW -s $SLIDE >$SPECIES.slideWindow.bed
     
-    cat $SPECIES.slideWindow.bed | awk '{ if ($3-$1>=1 000 000) print $0}' >$SPECIES.slideWindow.sizeFiltered.bed
+    #filter out intervales that are less than 1M bp in length
+    cat $SPECIES.slideWindow.bed | awk '{ if ($3-$1>=1000000) print $0}' >$SPECIES.slideWindow.sizeFiltered.bed
 
+    #extract the window sequences in tab-delimited format
     bedtools getfasta -tab -fi $SPECIES.refMasked.fa -bed $SPECIES.slideWindow.sizeFiltered.bed -fo $SPECIES.slideWindow.sizeFiltered.tab
     
-   
+    #create a subdir for all of the extracted sequences
+    mkdir sequences
+    
+    #and then create an new file for each sequence
     awk '{print ">"$1"\n"$2>"sequences/"$1".fas"}' <$SPECIES.slideWindow.sizeFiltered.tab
 
-
+    #change the name of each seqeunce to include the species name (for downstream phylo)
     sed -i "s/GL/$SPECIES.GL/" sequences/GL*.fas
 
+   
+    cd sequences
+   
+    #then add the individual window sequences to files in the alignments subdir
+    #  this file will eventually contain 1 sequence for each taxa (and need to be aligned).
+    for i in GL*.fas
+    do
+        cat $i >>../../alignments/$i
+    done
+    cd ..
 
-    for i in 
-
-  
-        cat $i >>../alignments/$i
-
-
-
+    #space is limited so compress the tab and sequence files.    
+    gzip $SPECIES.slideWindow.sizeFiltered.tab &
+    tar -cvzf sequences.tgz sequences &
+    
     cd ..
 done
     
@@ -123,8 +142,7 @@ done
     
     
     
-    awk '{print ">"$1"\n"$2>$1".fas"}' <test.tab
-    
+   
     
     
     
