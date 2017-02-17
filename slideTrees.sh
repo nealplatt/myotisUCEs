@@ -84,7 +84,7 @@ done
 WINDOW=1000000
 SLIDE=100000
 
-rm  /lustre/scratch/roplatt/refAssem/alignments/*.fas
+rm  /lustre/scratch/roplatt/refAssem/unaligned/*.fas
 
 for SPECIES in mAus mCil mLuc mOcc mSep mThy mViv mYum
 do
@@ -126,7 +126,7 @@ do
     echo "$SPECIES: (7) CAT to alignment files"
     for i in GL*.fas
     do
-        cat $i >>../../alignments/$i
+        cat $i >>../../unaligned/$i
     done
     cd ..
 
@@ -142,7 +142,18 @@ done
 # intermediate files:
 #   $SPECIES.slideWindow.sizeFiltered.tab
 #####################
-    
+
+mkdir aligned
+
+cd unaligned
+
+for UNALIGNED in *.fas
+do
+
+    ALIGNED=$(basename $UNALIGNED .fas)
+    mafft $UNALIGNED >../aligned/$ALIGNED.mafft.fas
+
+done
     
     
     
