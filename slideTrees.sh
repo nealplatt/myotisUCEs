@@ -133,7 +133,7 @@ do
     #space is limited so remove the tab and sequence files.    
     echo "$SPECIES: (9) Housekeeping"    
     rm $SPECIES.slideWindow.sizeFiltered.tab
-    tar-czf sequences.tgz sequences &
+    tar -czf sequences.tgz sequences &
     
     cd ..
 done
