@@ -84,6 +84,8 @@ done
 WINDOW=1000000
 SLIDE=100000
 
+rm  /lustre/scratch/roplatt/refAssem/alignments/*.fas
+
 for SPECIES in mAus mCil mLuc mOcc mSep mThy mViv mYum
 do
 
@@ -92,22 +94,28 @@ do
 
     #--------  Sliding windows -----------#
     #index the genome, then create BED sliding window intervals
+    echo "$SPECIES: (1) SAMTOOLS FAIDX"
     samtools faidx $SPECIES.refMasked.fa
+    echo "$SPECIES: (2) BEDTOOLS MAKEWINDOWS"
     bedtools makewindows -g $SPECIES.refMasked.fa.fai -w $WINDOW -s $SLIDE >$SPECIES.slideWindow.bed
     
     #filter out intervales that are less than 1M bp in length
+    echo "$SPECIES: (3) Filter intervals <1M"
     cat $SPECIES.slideWindow.bed | awk '{ if ($3-$1>=1000000) print $0}' >$SPECIES.slideWindow.sizeFiltered.bed
 
     #extract the window sequences in tab-delimited format
+    echo "$SPECIES: (4) BEDTOOLS GETFASTA"
     bedtools getfasta -tab -fi $SPECIES.refMasked.fa -bed $SPECIES.slideWindow.sizeFiltered.bed -fo $SPECIES.slideWindow.sizeFiltered.tab
     
     #create a subdir for all of the extracted sequences
     mkdir sequences
     
     #and then create an new file for each sequence
+    echo "$SPECIES: (5) AWK parse sequences"
     awk '{print ">"$1"\n"$2>"sequences/"$1".fas"}' <$SPECIES.slideWindow.sizeFiltered.tab
 
     #change the name of each seqeunce to include the species name (for downstream phylo)
+    echo "$SPECIES: (6) SED modify sequence names"
     sed -i "s/GL/$SPECIES.GL/" sequences/GL*.fas
 
    
@@ -115,15 +123,17 @@ do
    
     #then add the individual window sequences to files in the alignments subdir
     #  this file will eventually contain 1 sequence for each taxa (and need to be aligned).
+    echo "$SPECIES: (7) CAT to alignment files"
     for i in GL*.fas
     do
         cat $i >>../../alignments/$i
     done
     cd ..
 
-    #space is limited so compress the tab and sequence files.    
-    gzip $SPECIES.slideWindow.sizeFiltered.tab &
-    tar -cvzf sequences.tgz sequences &
+    #space is limited so remove the tab and sequence files.    
+    echo "$SPECIES: (9) Housekeeping"    
+    rm $SPECIES.slideWindow.sizeFiltered.tab
+    tar-czf sequences.tgz sequences &
     
     cd ..
 done
