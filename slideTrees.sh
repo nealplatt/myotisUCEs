@@ -151,7 +151,13 @@ for UNALIGNED in *.fas
 do
 
     ALIGNED=$(basename $UNALIGNED .fas)
-    mafft $UNALIGNED >../aligned/$ALIGNED.mafft.fas
+    mafft --retree 1 --thread 10 --maxiterate 2 --fft $UNALIGNED >../aligned/$ALIGNED.mafft.fas
+
+    cd ../aligned
+    bash /lustre/work/apps/RAxML/usefulScripts/convertFasta2Phylip.sh $ALIGNED.mafft.fas >$ALIGNED.mafft.phy
+    mpirun --mca mtl ^psm -np 10 raxmlHPC-MPI -m GTRCAT -p 12345 -x 12345 -# 1000 -s $ALIGNED.mafft.phy -n $ALIGNED
+
+    cd ../unaligned
 
 done
     
