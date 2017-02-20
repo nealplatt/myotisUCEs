@@ -155,7 +155,7 @@ do
 
     cd ../aligned
     bash /lustre/work/apps/RAxML/usefulScripts/convertFasta2Phylip.sh $ALIGNED.mafft.fas >$ALIGNED.mafft.phy
-    mpirun --mca mtl ^psm -np 10 raxmlHPC-MPI -m GTRCAT -p 12345 -x 12345 -# 1000 -s $ALIGNED.mafft.phy -n $ALIGNED
+    mpirun --mca mtl ^psm -np 10 raxmlHPC-MPI -f a -m GTRCAT -p 12345 -x 12345 -# 1000 -s $ALIGNED.mafft.phy -n $ALIGNED
 
     cd ../unaligned
 
